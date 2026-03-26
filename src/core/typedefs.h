@@ -3,8 +3,12 @@
 
 constexpr int MAX_SIZE_ADDRESS = 0xFFFF;
 
-typedef signed char byte_t;
-typedef unsigned char ubyte_t;
+typedef unsigned char byte_t;
+typedef signed char   sbyte_t;
+
+typedef unsigned short int word_t;
+typedef unsigned int       dword_t;
+typedef unsigned long long qword_t;
 
 typedef short int unsigned address_t;
 
