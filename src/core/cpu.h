@@ -3,10 +3,12 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <iostream>
 #include <assert.h>
 
 #include "typedefs.h"
+class Bus;
 
 class SharpSM83 
 {
@@ -43,12 +45,17 @@ private:
     byte_t getSubReg(const SubRegister r);
 
 private:
-    struct Opcode {
+    byte_t read(const address_t addr) noexcept;
+    void   write(const address_t addr, const byte_t val) noexcept;
+
+private:
+    /*struct Opcode {
         enum class OperandType {
-            r8, r16,
-            n8, n16,
-            e8, u3,
-            cc, vec
+            NONE,
+            R8, R16,
+            N8, N16,
+            E8, U3,
+            CC, VEC
         };
 
         std::string mnemonic = "ERR";
@@ -60,17 +67,69 @@ private:
         OperandType op2;
 
         int (*exec)();
-    };
+    };*/
 
-    std::vector<Opcode> opTable;
+    // std::vector<Opcode> opTable;
+    // Opcode getOpcode(const byte_t op);
 
-    Opcode getOpcode(const byte_t op);
+    int nop();
 
-    // int nop();
-    // int ld ();
-    // int adc();
+    int ld(const address_t dest, const byte_t value);
+    int ldh();
+    int push();
+    int pop();
+
+    int add();
+    int adc();
+    int sub();
+    int sbc();
+    int and_();
+    int or_();
+    int xor_();
+    int cp();
+
+    int inc();
+    int dec();
+
+    int daa();
+    int cpl();
+    int scf();
+    int ccf();
+
+    int rlca();
+    int rrca();
+    int rla();
+    int rra();
+
+    int rlc();
+    int rrc();
+    int rl();
+    int rr();
+    int sla();
+    int sra();
+    int srl();
+    int swap();
+
+    int bit();
+    int set();
+    int res();
+
+    int jp();
+    int jr();
+    int call();
+    int ret();
+    int reti();
+    int rst();
+
+    int stop();
+    int halt();
+    int di();
+    int ei();
 public:
-    SharpSM83();
+    std::shared_ptr<Bus> bus;
+public:
+    SharpSM83() {}
+    SharpSM83(const std::shared_ptr<Bus> bus);
     ~SharpSM83();
 
     void Clock();

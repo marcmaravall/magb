@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "bus.h"
 
 bool SharpSM83::getFlag(const Flag flag) const {
     return (af & (byte_t)flag);
@@ -9,6 +10,15 @@ void SharpSM83::setFlag(const Flag flag, const bool val) {
         af |= (byte_t)flag;
     else
         af &= ~(byte_t)flag;
+}
+
+
+byte_t SharpSM83::read(const address_t addr) noexcept {
+    return bus->read(addr);
+}
+
+void SharpSM83::write(const address_t addr, const byte_t val) noexcept {
+    bus->write(addr, val);
 }
 
 // TODO: do with less repetitions
@@ -64,17 +74,15 @@ byte_t SharpSM83::getSubReg(const SubRegister r) {
 
 // --- INSTRUCTIONS ---
 
-// int SharpSM83::adc() {
-//     
-// }
+int SharpSM83::ld(const address_t dest, const byte_t value) {
+    write(dest, value);
+    return 0;
+}
 
 // --- ------------ ---
 
-SharpSM83::SharpSM83() {
-    // TODO: add opcode table:
-    opTable = {
-        // (Opcode){.mnemonic = "nop", .}
-    };
+SharpSM83::SharpSM83(const std::shared_ptr<Bus> bus) {
+    this->bus = bus;
 }
 
 SharpSM83::~SharpSM83() {
@@ -82,5 +90,11 @@ SharpSM83::~SharpSM83() {
 }
 
 void SharpSM83::Clock() {
+    byte_t opcode = read(pc);
+    if (opcode == 0x00) {
+        // for testing
+        std::cout << "nop\n";
+    }
+    pc++;
 
 }

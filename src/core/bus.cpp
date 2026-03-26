@@ -1,7 +1,9 @@
 #include "bus.h"
 
 Bus::Bus() {
-
+    cpu = SharpSM83(shared_from_this());
+    mem = std::array<byte_t, 0xFFFF>();
+    mem.fill(0x00);
 }
 
 Bus::~Bus() {
@@ -9,6 +11,7 @@ Bus::~Bus() {
 }
 
 byte_t Bus::read(const address_t addr) noexcept {
+    return mem[addr];
     if (addr < 0x4000) {
         // bank 0
     } else if (addr < 0x8000) {
@@ -41,7 +44,8 @@ byte_t Bus::read(const address_t addr) noexcept {
 }
 
 void Bus::write(const address_t addr, const byte_t value) noexcept {
-    //mem[addr] = value;
-    (void)value;
-    (void)addr;
+    mem[addr] = value;
+    
+    //(void)value;
+    //(void)addr;
 }
