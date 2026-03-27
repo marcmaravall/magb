@@ -10,6 +10,8 @@ project ("magb")
 file(GLOB magb_src "src/*.cpp" "src/core/*.cpp")
 add_executable(magb ${magb_src})
 
+if (!WINDOWS)
 target_compile_options(magb PRIVATE
 -Wall -Wextra -pedantic -std=c++11
 )
+endif()

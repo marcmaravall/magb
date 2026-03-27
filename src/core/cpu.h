@@ -45,11 +45,11 @@ private:
     byte_t getSubReg(const SubRegister r);
 
 private:
-    byte_t read(const address_t addr) noexcept;
-    void   write(const address_t addr, const byte_t val) noexcept;
+    byte_t Read(const address_t addr) noexcept;
+    void   Write(const address_t addr, const byte_t val) noexcept;
 
 private:
-    /*struct Opcode {
+    struct Opcode {
         enum class OperandType {
             NONE,
             R8, R16,
@@ -59,67 +59,68 @@ private:
         };
 
         std::string mnemonic = "ERR";
+        void (*exec)(SharpSM83&, const Opcode& op);
+        
+        OperandType op1;
+        OperandType op2;
+        
         byte_t cycles = 2;
         byte_t size = 1;
         byte_t opcode = 0x00;
 
-        OperandType op1;
-        OperandType op2;
+    };
 
-        int (*exec)();
-    };*/
-
-    // std::vector<Opcode> opTable;
+    std::vector<Opcode> opTable;
     // Opcode getOpcode(const byte_t op);
 
-    int nop();
+    static void nop(SharpSM83& cpu, const Opcode& op);
 
-    int ld(const address_t dest, const byte_t value);
-    int ldh();
-    int push();
-    int pop();
+    static void ld(SharpSM83& cpu, const Opcode& op);
+    static void ldh(SharpSM83& cpu, const Opcode& op);
+    static void push(SharpSM83& cpu, const Opcode& op);
+    static void pop(SharpSM83& cpu, const Opcode& op);
 
-    int add();
-    int adc();
-    int sub();
-    int sbc();
-    int and_();
-    int or_();
-    int xor_();
-    int cp();
+    static void add (SharpSM83& cpu, const Opcode& op);
+    static void adc (SharpSM83& cpu, const Opcode& op);
+    static void sub (SharpSM83& cpu, const Opcode& op);
+    static void sbc (SharpSM83& cpu, const Opcode& op);
+    static void and_(SharpSM83& cpu, const Opcode& op);
+    static void or_ (SharpSM83& cpu, const Opcode& op);
+    static void xor_(SharpSM83& cpu, const Opcode& op);
+    static void cp  (SharpSM83& cpu, const Opcode& op);
 
-    int inc();
-    int dec();
+    static void inc (SharpSM83& cpu, const Opcode& op);
+    static void dec (SharpSM83& cpu, const Opcode& op);
 
-    int daa();
-    int cpl();
-    int scf();
-    int ccf();
+    static void daa (SharpSM83& cpu, const Opcode& op);
+    static void cpl (SharpSM83& cpu, const Opcode& op);
+    static void scf (SharpSM83& cpu, const Opcode& op);
+    static void ccf (SharpSM83& cpu, const Opcode& op);
 
-    int rlca();
-    int rrca();
-    int rla();
-    int rra();
+    static void rlca(SharpSM83& cpu, const Opcode& op);
+    static void rrca(SharpSM83& cpu, const Opcode& op);
+    static void rla (SharpSM83& cpu, const Opcode& op);
+    static void rra (SharpSM83& cpu, const Opcode& op);
 
-    int rlc();
-    int rrc();
-    int rl();
-    int rr();
-    int sla();
-    int sra();
-    int srl();
-    int swap();
+    static void rlc (SharpSM83& cpu, const Opcode& op);
+    static void rrc (SharpSM83& cpu, const Opcode& op);
+    static void rl  (SharpSM83& cpu, const Opcode& op);
+    static void rr  (SharpSM83& cpu, const Opcode& op);
+    static void sla (SharpSM83& cpu, const Opcode& op);
+    static void sra (SharpSM83& cpu, const Opcode& op);
+    static void srl (SharpSM83& cpu, const Opcode& op);
+    static void swap(SharpSM83& cpu, const Opcode& op);
 
-    int bit();
-    int set();
-    int res();
+    static void bit (SharpSM83& cpu, const Opcode& op);
+    static void set (SharpSM83& cpu, const Opcode& op);
+    static void res (SharpSM83& cpu, const Opcode& op);
 
-    int jp();
-    int jr();
-    int call();
-    int ret();
-    int reti();
-    int rst();
+    static void jp  (SharpSM83& cpu, const Opcode& op);
+    static void jr  (SharpSM83& cpu, const Opcode& op);
+    static void call(SharpSM83& cpu, const Opcode& op);
+    static void ret (SharpSM83& cpu, const Opcode& op);
+    static void reti(SharpSM83& cpu, const Opcode& op);
+    static void rst (SharpSM83& cpu, const Opcode& op);
 
     int stop();
     int halt();

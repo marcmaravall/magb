@@ -11,7 +11,7 @@ class Bus : public
      std::enable_shared_from_this<Bus> {
 private:
 // for testing on early development
-    std::array<byte_t, 0xFFFF> mem;
+    std::array<byte_t, 0x10000> mem;
 public:
     SharpSM83 cpu;
 
@@ -20,8 +20,10 @@ public:
     ~Bus();
 
 public:
-    byte_t read(const address_t addr) noexcept;
-    void   write(const address_t addr, const byte_t value) noexcept;
+    byte_t Read(const address_t addr) noexcept;
+    void   Write(const address_t addr, const byte_t value) noexcept;
+
+    void Init();
 };
 
 #endif // MAGB_BUS_H

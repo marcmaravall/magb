@@ -1,7 +1,7 @@
 #ifndef MAGB_TYPEDEFS_H
 #define MAGB_TYPEDEFS_H
 
-constexpr int MAX_SIZE_ADDRESS = 0xFFFF;
+constexpr int MAX_ADDRESS = 0xFFFF;
 
 typedef unsigned char byte_t;
 typedef signed char   sbyte_t;
