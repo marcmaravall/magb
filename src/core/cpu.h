@@ -122,10 +122,14 @@ private:
     static void reti(SharpSM83& cpu, const Opcode& op);
     static void rst (SharpSM83& cpu, const Opcode& op);
 
-    int stop();
-    int halt();
-    int di();
-    int ei();
+    static void stop(SharpSM83& cpu, const Opcode& op);
+    static void halt(SharpSM83& cpu, const Opcode& op);
+    static void di(SharpSM83& cpu, const Opcode& op);
+    static void ei(SharpSM83& cpu, const Opcode& op);
+private:
+	void decodeLdR8R8();
+	void decodeAlu();
+
 public:
     std::shared_ptr<Bus> bus;
 public:
