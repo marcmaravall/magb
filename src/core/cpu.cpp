@@ -79,7 +79,9 @@ void SharpSM83::nop(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::ld(SharpSM83& cpu, const Opcode& op) {
-
+    if (op.op1 == Opcode::OperandType::R8 && op.op2 == Opcode::OperandType::N8) {
+        
+    }
 }
 
 void SharpSM83::ldh(SharpSM83& cpu, const Opcode& op) {
@@ -349,8 +351,124 @@ void SharpSM83::decodeLdR8R8() {
     }
 }
 
+SharpSM83::SubRegister SharpSM83::decodeRegister(const uint8_t z) {
+	return static_cast<SubRegister>(z);
+}
+
+void SharpSM83::writeRegToReg(const SubRegister dest, const SubRegister value) {
+	byte_t val = getSubReg(value);
+	setSubReg(dest, val);
+}
+
+/*
+void SharpSM83::writeReg8(const RegDest reg, const byte_t val) {
+    switch (reg)
+    {
+	case RegDest::B:
+		setSubReg(SubRegister::B, val);
+	case RegDest::C:
+		setSubReg(SubRegister::C, val);
+	case RegDest::D:
+		setSubReg(SubRegister::D, val);
+	case RegDest::E:
+		setSubReg(SubRegister::E, val);
+	case RegDest::H:
+		setSubReg(SubRegister::H, val);
+	case RegDest::L:
+		setSubReg(SubRegister::L, val);
+	case RegDest::A:
+		setSubReg(SubRegister::A, val);
+	case RegDest::_HL_:
+        Write(hl, val);
+
+	[[unlikely]] default: 
+        assert(0 && "ERROR: invalid register!");
+    }
+}
+
+byte_t SharpSM83::getReg8(const RegDest reg) {
+    switch (reg)
+    {
+    case RegDest::B:
+		return getSubReg(SubRegister::B);
+	case RegDest::C:
+		return getSubReg(SubRegister::C);
+	case RegDest::D:
+		return getSubReg(SubRegister::D);
+	case RegDest::E:
+		return getSubReg(SubRegister::E);
+	case RegDest::H:
+		return getSubReg(SubRegister::H);
+	case RegDest::L:
+		return getSubReg(SubRegister::L);
+	case RegDest::A:
+		return getSubReg(SubRegister::A);
+    case RegDest::_HL_:
+		return Read(hl);    // this is not a subregister but its used
+
+	[[unlikely]] default: 
+        assert(0 && "ERROR: invalid register!");
+    }
+}*/
+
+void executeCB(const byte_t next) {
+	const byte_t group = (next & 0b11000000) >> 6;
+	const byte_t y = (next & 0b00111000) >> 3;
+	const byte_t z = (next & 0b00000111);
+
+    // TODO: implement
+    switch (group) {
+        case 0b00: // RLC, RRC, RL, RR, SLA, SRA, SRL, SWAP
+            
+            switch (y) {
+                case 0b000: // RLC
+                    
+                    break;
+                case 0b001: // RRC
+                    
+                    break;
+                case 0b010: // RL
+                    
+                    break;
+                case 0b011: // RR
+                    
+                    break;
+                case 0b100: // SLA
+                    
+                    break;
+                case 0b101: // SRA
+                    
+                    break;
+                case 0b110: // SRL
+                    
+                    break;
+                case 0b111: // SWAP
+					
+                    break;
+            }
+
+            break;
+        case 0b01: // BIT 
+            break;
+        case 0b10: // RES 
+            break;
+        case 0b11: // SET 
+
+            break;
+	}
+}
+
 void SharpSM83::decodeAlu() {
     // TODO: implement
+}
+
+void SharpSM83::Reset() {
+    pc = 0x0000;
+    sp = 0xFFFE;
+    af = 0x01B0;
+    bc = 0x0013;
+    de = 0x00D8;
+    hl = 0x014D;
 }
 
 SharpSM83::~SharpSM83() {

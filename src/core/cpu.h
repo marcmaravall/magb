@@ -34,22 +34,34 @@ private:
     void setFlag(const Flag flag, const bool val);
 
 private:
+    // name should be changed
     enum class SubRegister {
-        A, 
-        B, C,
-        D, E,
-        H, L
+        A = 0b111, 
+        B = 0b000, 
+        C = 0b010,
+        D = 0b011, 
+        E = 0b100,
+        H = 0b101, 
+        L = 0b110,
+		// _HL_ = 0b110 
     };
 
     void   setSubReg(const SubRegister r, const byte_t val);
     byte_t getSubReg(const SubRegister r);
 
 private:
-    byte_t Read(const address_t addr) noexcept;
-    void   Write(const address_t addr, const byte_t val) noexcept;
-
-private:
+	// TODO: change struct for much better development experience
     struct Opcode {
+        enum class Operation {
+            LD,
+            ADD, ADC, SUB, SBC, AND, OR, XOR, CP,
+            INC, DEC,
+            RLC, RRC, RL, RR, SLA, SRA, SRL, SWAP,
+            BIT, SET, RES,
+            NOP, HALT, STOP, DI, EI,
+            JP, JR, CALL, RET, RST
+        };
+
         enum class OperandType {
             NONE,
             R8, R16,
@@ -126,6 +138,27 @@ private:
     static void halt(SharpSM83& cpu, const Opcode& op);
     static void di(SharpSM83& cpu, const Opcode& op);
     static void ei(SharpSM83& cpu, const Opcode& op);
+
+private:
+    // enum class RegDest {
+    //     B = 0b000,
+    //     C = 0b001,
+    //     D = 0b010,
+    //     E = 0b011,
+    //     H = 0b100,
+    //     L = 0b101,
+	// 	_HL_ = 0b110,   // ptr to address in HL
+	// 	A = 0b111
+    // };
+
+    SubRegister decodeRegister(const uint8_t z);
+	void executeCB(const byte_t next);
+
+    void writeRegToReg(const SubRegister dest, const SubRegister value);
+
+	// void writeReg8(const RegDest reg, const byte_t val);
+	// byte_t getReg8(const RegDest reg);
+
 private:
 	void decodeLdR8R8();
 	void decodeAlu();
@@ -137,7 +170,12 @@ public:
     SharpSM83(const std::shared_ptr<Bus> bus);
     ~SharpSM83();
 
+	void Reset();
     void Clock();
+
+public:
+    byte_t Read(const address_t addr) noexcept;
+    void   Write(const address_t addr, const byte_t val) noexcept;
 };
 
 #endif // MAGB_CPU_H
