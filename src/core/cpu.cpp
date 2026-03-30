@@ -22,33 +22,33 @@ void SharpSM83::Write(const address_t addr, const byte_t val) noexcept {
 }
 
 // TODO: do with less repetitions
-void SharpSM83::setSubReg(const SubRegister r, const byte_t val) {
+void SharpSM83::setReg8(const Reg8 r, const byte_t val) {
     switch (r) {
-        case SubRegister::A: 
+        case Reg8::A: 
             af &= 0x00FF;
             af |= (word_t)val << 8;
             break;
-        case SubRegister::B: 
+        case Reg8::B: 
             bc &= 0x00FF;
             bc |= (word_t)val << 8;
             break; 
-        case SubRegister::C: 
+        case Reg8::C: 
             bc &= 0xFF00;
             bc |= val;
             break;
-        case SubRegister::D: 
+        case Reg8::D: 
             de &= 0x00FF;
             de |= (word_t)val << 8;
             break; 
-        case SubRegister::E: 
+        case Reg8::E: 
             de &= 0xFF00;
             de |= val;
             break;
-        case SubRegister::H: 
+        case Reg8::H: 
             hl &= 0x00FF;
             hl |= (word_t)val << 8;
             break;
-        case SubRegister::L: 
+        case Reg8::L: 
             break;
         
         [[unlikely]] default: 
@@ -56,19 +56,60 @@ void SharpSM83::setSubReg(const SubRegister r, const byte_t val) {
     }
 }
 
-byte_t SharpSM83::getSubReg(const SubRegister r) {
+byte_t SharpSM83::getReg8(const Reg8 r) {
     switch (r) {
-        case SubRegister::A: return (af & 0x00FF) >> 8;
-        case SubRegister::B: return (bc & 0x00FF) >> 8;
-        case SubRegister::C: return (bc & 0xFF00);
-        case SubRegister::D: return (de & 0x00FF) >> 8;
-        case SubRegister::E: return (de & 0xFF00);
-        case SubRegister::H: return (hl & 0x00FF) >> 8;
-        case SubRegister::L: return (hl & 0xFF00);
+        case Reg8::A: return (af & 0x00FF) >> 8;
+        case Reg8::B: return (bc & 0x00FF) >> 8;
+        case Reg8::C: return (bc & 0xFF00);
+        case Reg8::D: return (de & 0x00FF) >> 8;
+        case Reg8::E: return (de & 0xFF00);
+        case Reg8::H: return (hl & 0x00FF) >> 8;
+        case Reg8::L: return (hl & 0xFF00);
         
         [[unlikely]] default: 
             assert(0 && "ERROR: invalid subregister!");
     }
+    return 0x00;
+}
+
+void SharpSM83::setReg16(const Reg16 r, const uint16_t val) {
+    switch (r) {
+        case Reg16::AF: 
+            af = val;
+            break;
+        case Reg16::BC: 
+            bc = val;
+			break;
+        case Reg16::DE: 
+			de = val;
+            break;
+		case Reg16::HL:
+			de = val;
+            break;
+		case Reg16::SP:
+            sp = val;
+            break;
+        case Reg16::PC:
+            pc = val;
+            break;
+        
+        [[unlikely]] default: 
+			assert(0 && "ERROR: invalid register!");
+    }
+}
+
+byte_t SharpSM83::getReg16(const Reg16 r) {
+    switch (r) {
+        case Reg16::AF: return af;
+        case Reg16::BC: return bc;
+        case Reg16::DE: return de;
+        case Reg16::HL: return hl;
+        case Reg16::SP: return sp;
+        case Reg16::PC: return pc;
+
+	[[unlikely]] default: assert(0 && "ERROR: invalid register!");
+    }
+
     return 0x00;
 }
 
@@ -79,9 +120,9 @@ void SharpSM83::nop(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::ld(SharpSM83& cpu, const Opcode& op) {
-    if (op.op1 == Opcode::OperandType::R8 && op.op2 == Opcode::OperandType::N8) {
-        
-    }
+    // if (op.op1 == Opcode::OperandType::R8 && op.op2 == Opcode::OperandType::N8) {
+    //     
+    // }
 }
 
 void SharpSM83::ldh(SharpSM83& cpu, const Opcode& op) {
@@ -256,7 +297,10 @@ void SharpSM83::ei(SharpSM83& cpu, const Opcode& op) {
 SharpSM83::SharpSM83(const std::shared_ptr<Bus> bus) {
     this->bus = bus;
 
+	// DOING SOME CODE REAFACTORING FIRST, THEN I WILL FILL THIS OUT PROPERLY
+
     // hardcoded table (for now)
+    /*
 	opTable = std::vector<Opcode>(0x100);
     opTable[0x00] = Opcode{ "NOP", &SharpSM83::nop, Opcode::OperandType::NONE, Opcode::OperandType::NONE, 4, 1, 0x00 };
 	opTable[0x01] = Opcode{ "LD BC, d16", &SharpSM83::ld, Opcode::OperandType::R16, Opcode::OperandType::N16, 12, 3, 0x01 };
@@ -325,12 +369,12 @@ SharpSM83::SharpSM83(const std::shared_ptr<Bus> bus) {
     opTable[0x3D] = Opcode{ "DEC A", &SharpSM83::dec, Opcode::OperandType::R8, Opcode::OperandType::NONE, 4, 1, 0x3D };
     opTable[0x3E] = Opcode{ "LD A, d8", &SharpSM83::ld, Opcode::OperandType::R8, Opcode::OperandType::N8, 8, 2, 0x3E };
     opTable[0x3F] = Opcode{ "CCF", &SharpSM83::ccf, Opcode::OperandType::NONE, Opcode::OperandType::NONE, 4, 1, 0x3F };
-
+    */
 	// 0x40 - 0x7F its always LD r8, r8 or LD (HL), r8 or LD r8, (HL) or LD (HL), (HL)
     decodeLdR8R8();
 
-    opTable[0x76] = Opcode{ "HALT", &SharpSM83::halt, Opcode::OperandType::NONE, Opcode::OperandType::NONE, 4, 1, 0x76 };
-
+    // opTable[0x76] = Opcode{"HALT", &SharpSM83::halt, Opcode::OperandType::NONE, Opcode::OperandType::NONE, 4, 1, 0x76};
+   
 	// alu: 0x80 - 0xBF its always ALU A, r8 or ALU A, (HL)
 	decodeAlu();
 }
@@ -340,24 +384,85 @@ void SharpSM83::decodeLdR8R8() {
         byte_t dest = (i & 0b00111000) >> 3;
         byte_t src  = (i & 0b00000111);
         if (dest == 6 && src == 6) {
-            opTable[i] = Opcode{ "LD (HL), (HL)", &SharpSM83::ld, Opcode::OperandType::R16, Opcode::OperandType::R16, 8, 1, i };
+        //    opTable[i] = Opcode{ "LD (HL), (HL)", &SharpSM83::ld, Opcode::OperandType::R16, Opcode::OperandType::R16, 8, 1, i };
         } else if (dest == 6) {
-            opTable[i] = Opcode{ "LD (HL), r" + std::to_string(src), &SharpSM83::ld, Opcode::OperandType::R16, Opcode::OperandType::R8, 8, 1, i };
+        //    opTable[i] = Opcode{ "LD (HL), r" + std::to_string(src), &SharpSM83::ld, Opcode::OperandType::R16, Opcode::OperandType::R8, 8, 1, i };
         } else if (src == 6) {
-            opTable[i] = Opcode{ "LD r" + std::to_string(dest) + ", (HL)", &SharpSM83::ld, Opcode::OperandType::R8, Opcode::OperandType::R16, 8, 1, i };
+        //    opTable[i] = Opcode{ "LD r" + std::to_string(dest) + ", (HL)", &SharpSM83::ld, Opcode::OperandType::R8, Opcode::OperandType::R16, 8, 1, i };
         } else {
-            opTable[i] = Opcode{ "LD r" + std::to_string(dest) + ", r" + std::to_string(src), &SharpSM83::ld, Opcode::OperandType::R8, Opcode::OperandType::R8, 4, 1, i };
+        //    opTable[i] = Opcode{ "LD r" + std::to_string(dest) + ", r" + std::to_string(src), &SharpSM83::ld, Opcode::OperandType::R8, Opcode::OperandType::R8, 4, 1, i };
         }
     }
 }
 
-SharpSM83::SubRegister SharpSM83::decodeRegister(const uint8_t z) {
-	return static_cast<SubRegister>(z);
+SharpSM83::Reg8 SharpSM83::decodeRegister(const uint8_t z) {
+	return static_cast<Reg8>(z);
 }
 
-void SharpSM83::writeRegToReg(const SubRegister dest, const SubRegister value) {
-	byte_t val = getSubReg(value);
-	setSubReg(dest, val);
+// void SharpSM83::writeRegToReg(const Reg8 dest, const Reg8 value) {
+// 	byte_t val = getReg8(value);
+// 	setReg8(dest, val);
+// }
+// 
+// void SharpSM83::writeImmToReg(const Reg8 dest, const byte_t val) {
+//     setReg8(dest, val);
+// }
+
+uint16_t SharpSM83::readOperand(const Operand& op) {
+    switch (op.mode) {
+    case AddrMode::Reg8:
+        return getReg8((Reg8)op.r8);
+
+    case AddrMode::Reg16:
+        return getReg16((Reg16)op.r16);
+
+    case AddrMode::Imm8:
+        return (uint8_t)op.n8;
+
+    case AddrMode::Imm16:
+        return op.n16;
+
+    case AddrMode::Rel8:
+        return (int8_t)op.e8;
+
+    case AddrMode::IndHL:
+        return Read(hl);
+
+    case AddrMode::IndHLInc: {
+        uint8_t val = Read(hl);
+        hl++;
+        return val;
+    }
+
+    case AddrMode::IndHLDec: {
+        uint8_t val = Read(hl);
+        hl--;
+        return val;
+    }
+
+    default:
+        return 0;
+    }
+}
+
+void SharpSM83::writeOperand(const Operand& dest, const uint16_t val) {
+    
+    switch (dest.mode) {
+    case AddrMode::Reg8:
+		setReg8((Reg8)dest.r8, (byte_t)val);
+        break;
+	case AddrMode::Reg16:
+		setReg16((Reg16)dest.r16, val);
+        break;
+	case AddrMode::Dir16:
+		Write(dest.n16, (byte_t)val);
+        break;
+
+    // todo: continue
+
+    [[unlikely]] default:
+		break;
+    }
 }
 
 /*

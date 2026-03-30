@@ -33,9 +33,8 @@ private:
     bool getFlag(const Flag flag) const;
     void setFlag(const Flag flag, const bool val);
 
-private:
-    // name should be changed
-    enum class SubRegister {
+public:
+    enum class Reg8 {
         A = 0b111, 
         B = 0b000, 
         C = 0b010,
@@ -43,44 +42,97 @@ private:
         E = 0b100,
         H = 0b101, 
         L = 0b110,
-		// _HL_ = 0b110 
     };
 
-    void   setSubReg(const SubRegister r, const byte_t val);
-    byte_t getSubReg(const SubRegister r);
+    enum class Reg16 {
+        BC = 0b00, 
+        DE = 0b01, 
+        HL = 0b10,
+        SP = 0b11, 
+        AF, 
+        PC
+	};
 
 private:
-	// TODO: change struct for much better development experience
-    struct Opcode {
-        enum class Operation {
-            LD,
-            ADD, ADC, SUB, SBC, AND, OR, XOR, CP,
-            INC, DEC,
-            RLC, RRC, RL, RR, SLA, SRA, SRL, SWAP,
-            BIT, SET, RES,
-            NOP, HALT, STOP, DI, EI,
-            JP, JR, CALL, RET, RST
-        };
+    void   setReg8(const Reg8 r, const byte_t val);
+    byte_t getReg8(const Reg8 r);
 
-        enum class OperandType {
-            NONE,
-            R8, R16,
-            N8, N16,
-            E8, U3,
-            CC, VEC
+    void   setReg16(const Reg16 r, const uint16_t val);
+    byte_t getReg16(const Reg16 r);
+
+public:
+    enum class AddrMode {
+        None,
+
+        Reg8,
+        Reg16,
+
+        Imm8,
+        Imm16,
+        Rel8,
+
+        IndHL,
+		IndHLInc,
+		IndHLDec,
+        IndBC,
+        IndDE,
+        IndC,
+        Dir8,
+        Dir16,
+
+        CC,
+        Vec
+    };
+
+    struct Operand {
+        AddrMode mode;
+        
+        union {
+            Reg8 r8;
+			Reg16 r16;
+
+			uint8_t n8;
+			uint16_t n16;
+
+			int8_t e8;
+			uint8_t u3;
+
+            bool cc;
+            uint16_t vec;
+
+            uint16_t raw;
         };
+    };
+
+    enum class Operation {
+        LD,
+        ADD, ADC, SUB, SBC, AND, OR, XOR, CP,
+        INC, DEC,
+        RLC, RRC, RL, RR, SLA, SRA, SRL, SWAP,
+        BIT, SET, RES,
+        NOP, HALT, STOP, DI, EI,
+        JP, JR, CALL, RET, RST
+    };
+
+    struct Opcode {
 
         std::string mnemonic = "ERR";
         void (*exec)(SharpSM83&, const Opcode& op);
         
-        OperandType op1;
-        OperandType op2;
+        AddrMode op1;
+        AddrMode op2;
         
         byte_t cycles = 2;
         byte_t size = 1;
         byte_t opcode = 0x00;
 
     };
+
+private:
+    void writeOperand(const Operand& dest, const uint16_t val);
+	uint16_t readOperand(const Operand& op);
+
+private:
 
     std::vector<Opcode> opTable;
     // Opcode getOpcode(const byte_t op);
@@ -151,10 +203,10 @@ private:
 	// 	A = 0b111
     // };
 
-    SubRegister decodeRegister(const uint8_t z);
+    Reg8 decodeRegister(const uint8_t z);
 	void executeCB(const byte_t next);
 
-    void writeRegToReg(const SubRegister dest, const SubRegister value);
+    void writeRegToReg(const Reg8 dest, const Reg8 value);
 
 	// void writeReg8(const RegDest reg, const byte_t val);
 	// byte_t getReg8(const RegDest reg);
