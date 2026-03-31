@@ -116,17 +116,17 @@ byte_t SharpSM83::getReg16(const Reg16 r) {
 // --- INSTRUCTIONS ---
 
 void SharpSM83::nop(SharpSM83& cpu, const Opcode& op) {
-	
+	// nothing
 }
 
 void SharpSM83::ld(SharpSM83& cpu, const Opcode& op) {
-    // if (op.op1 == Opcode::OperandType::R8 && op.op2 == Opcode::OperandType::N8) {
-    //     
-    // }
+    uint16_t val = cpu.readOperand(op.op2);
+    cpu.writeOperand(op.op1, val);
 }
 
 void SharpSM83::ldh(SharpSM83& cpu, const Opcode& op) {
-
+    uint16_t val = cpu.readOperand(op.op2);
+    cpu.writeOperand(op.op1, val);
 }
 
 void SharpSM83::push(SharpSM83& cpu, const Opcode& op) {
@@ -138,11 +138,31 @@ void SharpSM83::pop(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::add(SharpSM83& cpu, const Opcode& op) {
+    byte_t first = cpu.readOperand(op.op1);
+    byte_t val = cpu.readOperand(op.op2);
+    byte_t carry = cpu.getFlag(Flag::CARRY);
+    uint16_t res = cpu.readOperand(op.op1) + val;
 
+    cpu.writeOperand(op.op1, (res & 0xFF));
+    cpu.setFlag(Flag::ZERO, (res&0xFF) == 0);
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, ((first & 0xF) + (val & 0xF) + carry) > 0xF);
+    cpu.setFlag(Flag::CARRY, res > 0xFF);
 }
 
 void SharpSM83::adc(SharpSM83& cpu, const Opcode& op) {
+    byte_t a = cpu.getReg8(Reg8::A);
+    byte_t val = cpu.readOperand(op.op2);
+    byte_t carry = cpu.getFlag(Flag::CARRY);
 
+    uint16_t res = a + val + carry;
+
+    cpu.setFlag(Flag::ZERO, (res & 0xFF) == 0);
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, ((a & 0xF) + (val & 0xF) + carry) > 0xF);
+    cpu.setFlag(Flag::CARRY, res > 0xFF);
+
+    cpu.setReg8(Reg8::A, res & 0xFF);
 }
 
 void SharpSM83::sub(SharpSM83& cpu, const Opcode& op) {
@@ -150,7 +170,18 @@ void SharpSM83::sub(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::sbc(SharpSM83& cpu, const Opcode& op) {
+    uint8_t a = cpu.getReg8(Reg8::A);
+    uint8_t val = cpu.readOperand(op.op2);
+    uint8_t carry = cpu.getFlag(Flag::CARRY);
 
+    uint16_t res = a - val - carry;
+
+    cpu.setFlag(Flag::ZERO, (res & 0xFF) == 0);
+    cpu.setFlag(Flag::NEGATIVE, 1);
+    cpu.setFlag(Flag::HALF_CARRY, (a & 0xF) < ((val & 0xF) + carry));
+    cpu.setFlag(Flag::CARRY, a < (val + carry));
+
+    cpu.setReg8(Reg8::A, res & 0xFF);
 }
 
 void SharpSM83::and_(SharpSM83& cpu, const Opcode& op) {

@@ -119,8 +119,8 @@ public:
         std::string mnemonic = "ERR";
         void (*exec)(SharpSM83&, const Opcode& op);
         
-        AddrMode op1;
-        AddrMode op2;
+        Operand op1;
+        Operand op2;
         
         byte_t cycles = 2;
         byte_t size = 1;
