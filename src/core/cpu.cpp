@@ -248,12 +248,30 @@ void SharpSM83::rrc (SharpSM83& cpu, const Opcode& op) {
 
 }
 
-void SharpSM83::rl  (SharpSM83& cpu, const Opcode& op) {
+void SharpSM83::rl(SharpSM83& cpu, const Opcode& op) {
+    uint8_t value = cpu.readOperand(op.op1);
+    bool oldCarry = cpu.getFlag(Flag::CARRY);
+    bool newCarry = value & 0x80;
+    uint8_t result = (value << 1) | oldCarry;
 
+    cpu.setFlag(Flag::CARRY, newCarry);
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::ZERO, result == 0);
+    cpu.writeOperand(op.op1, result);
 }
 
 void SharpSM83::rr  (SharpSM83& cpu, const Opcode& op) {
-
+    uint16_t val = cpu.readOperand(op.op1);
+    bool carry = val & 0x01;
+    val >>= 1;
+    val |= (cpu.getFlag(Flag::CARRY) << 7);
+    
+    cpu.setFlag(Flag::CARRY, carry);
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::ZERO, (val & 0xFF) == 0);
+    cpu.writeOperand(op.op1, val&0xFF);
 }
 
 void SharpSM83::sla (SharpSM83& cpu, const Opcode& op) {
@@ -284,15 +302,27 @@ void SharpSM83::res(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::jp  (SharpSM83& cpu, const Opcode& op) {
-
+    uint16_t addr = cpu.readOperand(op.op1);
+    cpu.pc = addr;
 }
 
 void SharpSM83::jr  (SharpSM83& cpu, const Opcode& op) {
-
+    if (op.op2.mode != AddrMode::None) {
+        // conditional jump
+        // TODO: implement
+        
+    } else {
+        int8_t offset = (int8_t)cpu.readOperand(op.op1);
+        cpu.pc += offset;
+    }
 }
 
 void SharpSM83::call(SharpSM83& cpu, const Opcode& op) {
-
+    if (op.op1.mode == AddrMode::CC) {
+        // TODO: implement:
+    } else {
+        
+    }
 }
 
 void SharpSM83::ret (SharpSM83& cpu, const Opcode& op) {
@@ -324,6 +354,28 @@ void SharpSM83::ei(SharpSM83& cpu, const Opcode& op) {
 }
 
 // --- ------------ ---
+
+
+void SharpSM83::stackPush8(const byte_t val) {
+    sp--;
+    Write(sp, val);
+}
+
+void SharpSM83::stackPush16(const uint16_t val) {
+    Write(sp--, (val & 0x00FF) >> 8);
+    Write(sp--, (val&0xFF));
+}
+
+byte_t SharpSM83::stackPop8 () {
+    byte_t res = Read(sp++);
+    return res;
+}
+
+uint16_t SharpSM83::stackPop16() {
+    uint16_t res = Read(sp++);
+    res |= Read(sp++) << 8;
+    return res;
+}
 
 SharpSM83::SharpSM83(const std::shared_ptr<Bus> bus) {
     this->bus = bus;

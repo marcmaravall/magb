@@ -133,6 +133,11 @@ private:
 	uint16_t readOperand(const Operand& op);
 
 private:
+    void stackPush8(const byte_t val);
+    void stackPush16(const uint16_t val);
+    byte_t stackPop8();
+    uint16_t stackPop16();
+private:
 
     std::vector<Opcode> opTable;
     // Opcode getOpcode(const byte_t op);
