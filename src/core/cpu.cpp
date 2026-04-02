@@ -1,5 +1,7 @@
 #include "cpu.h"
 #include "bus.h"
+#include "typedefs.h"
+#include <cstdint>
 
 bool SharpSM83::getFlag(const Flag flag) const {
     return (af & (byte_t)flag);
@@ -12,6 +14,13 @@ void SharpSM83::setFlag(const Flag flag, const bool val) {
         af &= ~(byte_t)flag;
 }
 
+void SharpSM83::clearFlags() {
+    af &= 0xFF0F;
+}
+
+void SharpSM83::setHalfCarry(const uint8_t val) {
+    setFlag (Flag::CARRY, (val & 0xF) < ((val & 0xF) + getFlag(Flag::CARRY)));
+}
 
 byte_t SharpSM83::Read(const address_t addr) noexcept {
     return bus->Read(addr);
@@ -130,11 +139,15 @@ void SharpSM83::ldh(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::push(SharpSM83& cpu, const Opcode& op) {
-
+    uint16_t val = cpu.readOperand(op.op1);
+    cpu.Write(--cpu.sp, (val & 0xFF00) >> 8);
+    cpu.Write(--cpu.sp, (val & 0x00FF));
 }
 
 void SharpSM83::pop(SharpSM83& cpu, const Opcode& op) {
-
+    uint16_t val = cpu.Read(cpu.sp++);
+    val |= cpu.Read(cpu.sp++) << 8;
+    cpu.writeOperand(op.op1, val);
 }
 
 void SharpSM83::add(SharpSM83& cpu, const Opcode& op) {
@@ -166,7 +179,14 @@ void SharpSM83::adc(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::sub(SharpSM83& cpu, const Opcode& op) {
-
+    byte_t a = cpu.readOperand(op.op1);     // this doesnt represent registers
+    byte_t b = cpu.readOperand(op.op2);
+    byte_t val = a - b;
+    cpu.writeOperand(op.op1, val);
+    cpu.setFlag(Flag::ZERO, val == 0);
+    cpu.setFlag(Flag::NEGATIVE, 1);
+    cpu.setHalfCarry(val);
+    cpu.setFlag(Flag::CARRY, b > a);
 }
 
 void SharpSM83::sbc(SharpSM83& cpu, const Opcode& op) {
@@ -185,35 +205,106 @@ void SharpSM83::sbc(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::and_(SharpSM83& cpu, const Opcode& op) {
-
+    byte_t val = (byte_t)cpu.readOperand(op.op2);
+    val &= cpu.readOperand(op.op1) & 0xFF;
+    cpu.clearFlags();
+    cpu.setFlag(Flag::ZERO, val == 0);
+    
+    cpu.writeOperand(op.op1, val);
 }
 
 void SharpSM83::or_(SharpSM83& cpu, const Opcode& op) {
-
+    byte_t val = (byte_t)cpu.readOperand(op.op2);
+    val |= cpu.readOperand(op.op1) & 0xFF;
+    cpu.clearFlags();
+    cpu.setFlag(Flag::ZERO, val == 0);
+    
+    cpu.writeOperand(op.op1, val);
 }
 
 void SharpSM83::xor_(SharpSM83& cpu, const Opcode& op) {
-
+    byte_t val = (byte_t)cpu.readOperand(op.op2);
+    val ^= cpu.readOperand(op.op1) & 0xFF;
+    cpu.clearFlags();
+    cpu.setFlag(Flag::ZERO, val == 0);
+    
+    cpu.writeOperand(op.op1, val);
 }
 
 void SharpSM83::cp(SharpSM83& cpu, const Opcode& op) {
-
+    byte_t a = cpu.readOperand(op.op1);
+    byte_t b = cpu.readOperand(op.op2);
+    byte_t val = a-b;
+    cpu.setFlag(Flag::ZERO, val == 0);
+    cpu.setFlag(Flag::NEGATIVE, 1);
+    cpu.setHalfCarry(val);
+    cpu.setFlag(Flag::CARRY, b > a);
 }
 
 void SharpSM83::inc(SharpSM83& cpu, const Opcode& op) {
-
+    if (op.op1.mode == AddrMode::Reg16) {
+        // 16
+        uint16_t val = cpu.readOperand(op.op1)+1;
+        cpu.writeOperand(op.op1, val);
+        cpu.setFlag(Flag::ZERO, val == 0);
+        cpu.setHalfCarry(val);
+    } else {
+        // 8
+        byte_t val = ((byte_t)cpu.readOperand(op.op1))+1;
+        cpu.writeOperand(op.op1, val);
+        cpu.setFlag(Flag::ZERO, val == 0);
+        cpu.setHalfCarry(val);
+    }
+    cpu.setFlag(Flag::NEGATIVE, 0);
 }
 
 void SharpSM83::dec(SharpSM83& cpu, const Opcode& op) {
-
+    if (op.op1.mode == AddrMode::Reg16) {
+        // 16
+        uint16_t val = cpu.readOperand(op.op1)-1;
+        cpu.writeOperand(op.op1, val);
+        cpu.setFlag(Flag::ZERO, val == 0);
+        cpu.setHalfCarry(val);
+    } else {
+        // 8
+        byte_t val = ((byte_t)cpu.readOperand(op.op1))-1;
+        cpu.writeOperand(op.op1, val);
+        cpu.setFlag(Flag::ZERO, val == 0);
+        cpu.setHalfCarry(val);
+    }
+    cpu.setFlag(Flag::NEGATIVE, 1);
 }
 
 void SharpSM83::daa(SharpSM83& cpu, const Opcode& op) {
+    bool n = cpu.getFlag(Flag::NEGATIVE);
+    bool h = cpu.getFlag(Flag::HALF_CARRY);
+    bool c = cpu.getFlag(Flag::CARRY);
+    byte_t a = cpu.getReg8(Reg8::A);
+    byte_t adj = 0;
 
+    if (n) {
+        if (h)
+            adj += 0x06;
+        if (c)
+            adj += 0x60;
+        cpu.setReg8(Reg8::A, a-adj);
+    } else {
+        if (h || a > 0x09) 
+            adj += 0x06;
+        if (c || a > 0x99) {
+            cpu.setFlag(Flag::CARRY, 1);
+        }
+        cpu.setReg8(Reg8::A, a + adj);
+    }
+
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::ZERO, cpu.getReg8(Reg8::A) == 0);
 }
 
 void SharpSM83::cpl(SharpSM83& cpu, const Opcode& op) {
-
+    cpu.setReg8(Reg8::A, ~cpu.getReg8(Reg8::A));
+    cpu.setFlag(Flag::NEGATIVE, 1);
+    cpu.setFlag(Flag::HALF_CARRY, 1);
 }
 
 void SharpSM83::scf(SharpSM83& cpu, const Opcode& op) {
@@ -287,7 +378,14 @@ void SharpSM83::srl (SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::swap(SharpSM83& cpu, const Opcode& op) {
+    byte_t val = cpu.readOperand(op.op1);
+    byte_t upper = val & 0x0F >> 4;
+    byte_t lower = val & 0xF0;
+    val = upper | lower << 4;
 
+    cpu.clearFlags();
+    cpu.setFlag(Flag::ZERO, val);
+    cpu.writeOperand(op.op1, val);
 }
 
 void SharpSM83::bit(SharpSM83& cpu, const Opcode& op) {
@@ -326,11 +424,18 @@ void SharpSM83::call(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::ret (SharpSM83& cpu, const Opcode& op) {
+    if (op.op1.mode == AddrMode::CC) {
+        // TODO: implement
 
+    } else {
+
+        cpu.pc = cpu.stackPop16();
+    }
 }
 
 void SharpSM83::reti(SharpSM83& cpu, const Opcode& op) {
-
+    cpu.ei(cpu, op);
+    cpu.ret(cpu, op);
 }
 
 void SharpSM83::rst (SharpSM83& cpu, const Opcode& op) {
@@ -338,7 +443,7 @@ void SharpSM83::rst (SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::stop(SharpSM83& cpu, const Opcode& op) {
-
+    
 }
 
 void SharpSM83::halt(SharpSM83& cpu, const Opcode& op) {

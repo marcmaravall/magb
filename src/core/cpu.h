@@ -32,6 +32,8 @@ private:
 private:
     bool getFlag(const Flag flag) const;
     void setFlag(const Flag flag, const bool val);
+    void clearFlags();
+    void setHalfCarry(const byte_t val);
 
 public:
     enum class Reg8 {
