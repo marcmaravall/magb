@@ -30,10 +30,10 @@ private:
     word_t pc;
 
 private:
-    bool getFlag(const Flag flag) const;
-    void setFlag(const Flag flag, const bool val);
-    void clearFlags();
-    void setHalfCarry(const byte_t val);
+    constexpr bool getFlag(const Flag flag) const;
+    constexpr void setFlag(const Flag flag, const bool val);
+    constexpr void clearFlags();
+    constexpr void setHalfCarry(const byte_t val);
 
 public:
     enum class Reg8 {
@@ -61,6 +61,13 @@ private:
 
     void   setReg16(const Reg16 r, const uint16_t val);
     byte_t getReg16(const Reg16 r);
+
+private: 
+    enum class Condition {
+        Z, NZ,
+        C, NC
+    };
+    constexpr bool isCondition(const Condition c);
 
 public:
     enum class AddrMode {

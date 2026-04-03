@@ -1,24 +1,25 @@
 #include "cpu.h"
 #include "bus.h"
 #include "typedefs.h"
+#include <cassert>
 #include <cstdint>
 
-bool SharpSM83::getFlag(const Flag flag) const {
+constexpr bool SharpSM83::getFlag(const Flag flag) const {
     return (af & (byte_t)flag);
 }
 
-void SharpSM83::setFlag(const Flag flag, const bool val) {
+constexpr void SharpSM83::setFlag(const Flag flag, const bool val) {
     if (val)
         af |= (byte_t)flag;
     else
         af &= ~(byte_t)flag;
 }
 
-void SharpSM83::clearFlags() {
+constexpr void SharpSM83::clearFlags() {
     af &= 0xFF0F;
 }
 
-void SharpSM83::setHalfCarry(const uint8_t val) {
+constexpr void SharpSM83::setHalfCarry(const uint8_t val) {
     setFlag (Flag::CARRY, (val & 0xF) < ((val & 0xF) + getFlag(Flag::CARRY)));
 }
 
@@ -120,6 +121,24 @@ byte_t SharpSM83::getReg16(const Reg16 r) {
     }
 
     return 0x00;
+}
+
+constexpr bool SharpSM83::isCondition(const Condition c) {
+    bool carry = getFlag(Flag::CARRY);
+    bool zero  = getFlag(Flag::ZERO);
+    switch (c) {
+        case Condition::C:
+            return carry;
+        case Condition::NC:
+            return !carry;
+        case Condition::Z:
+            return zero;
+        case Condition::NZ:
+            return !zero;
+    }
+
+    assert(0 && "ERROR: invalid condition!");
+    return false;
 }
 
 // --- INSTRUCTIONS ---
@@ -426,9 +445,12 @@ void SharpSM83::call(SharpSM83& cpu, const Opcode& op) {
 void SharpSM83::ret (SharpSM83& cpu, const Opcode& op) {
     if (op.op1.mode == AddrMode::CC) {
         // TODO: implement
+        if (op.op1.cc) {
+            
+        } else {
 
+        }
     } else {
-
         cpu.pc = cpu.stackPop16();
     }
 }
@@ -460,14 +482,12 @@ void SharpSM83::ei(SharpSM83& cpu, const Opcode& op) {
 
 // --- ------------ ---
 
-
 void SharpSM83::stackPush8(const byte_t val) {
-    sp--;
-    Write(sp, val);
+    Write(--sp, val);
 }
 
 void SharpSM83::stackPush16(const uint16_t val) {
-    Write(sp--, (val & 0x00FF) >> 8);
+    Write(sp--, (val & 0xFF00) >> 8);
     Write(sp--, (val&0xFF));
 }
 
@@ -484,8 +504,6 @@ uint16_t SharpSM83::stackPop16() {
 
 SharpSM83::SharpSM83(const std::shared_ptr<Bus> bus) {
     this->bus = bus;
-
-	// DOING SOME CODE REAFACTORING FIRST, THEN I WILL FILL THIS OUT PROPERLY
 
     // hardcoded table (for now)
     /*
@@ -598,6 +616,7 @@ SharpSM83::Reg8 SharpSM83::decodeRegister(const uint8_t z) {
 
 uint16_t SharpSM83::readOperand(const Operand& op) {
     switch (op.mode) {
+
     case AddrMode::Reg8:
         return getReg8((Reg8)op.r8);
 
@@ -605,7 +624,7 @@ uint16_t SharpSM83::readOperand(const Operand& op) {
         return getReg16((Reg16)op.r16);
 
     case AddrMode::Imm8:
-        return (uint8_t)op.n8;
+        return op.n8;
 
     case AddrMode::Imm16:
         return op.n16;
@@ -617,39 +636,100 @@ uint16_t SharpSM83::readOperand(const Operand& op) {
         return Read(hl);
 
     case AddrMode::IndHLInc: {
-        uint8_t val = Read(hl);
-        hl++;
+        uint8_t val = Read(hl++); 
         return val;
     }
 
     case AddrMode::IndHLDec: {
-        uint8_t val = Read(hl);
-        hl--;
+        uint8_t val = Read(hl--);
         return val;
     }
 
-    default:
+    case AddrMode::IndBC:
+        return Read(bc);
+
+    case AddrMode::IndDE:
+        return Read(de);
+
+    case AddrMode::IndC: {
+        uint16_t addr = 0xFF00 + getReg8(Reg8::C);
+        return Read(addr);
+    }
+
+    case AddrMode::Dir8: {
+        uint16_t addr = 0xFF00 + op.n8;
+        return Read(addr);
+    }
+
+    case AddrMode::Dir16:
+        return Read(op.n16);
+
+    [[unlikely]] case AddrMode::CC:
+    [[unlikely]] case AddrMode::Vec:
+    [[unlikely]] case AddrMode::None:
+    [[unlikely]] default:
         return 0;
     }
 }
 
 void SharpSM83::writeOperand(const Operand& dest, const uint16_t val) {
-    
     switch (dest.mode) {
+
     case AddrMode::Reg8:
-		setReg8((Reg8)dest.r8, (byte_t)val);
-        break;
-	case AddrMode::Reg16:
-		setReg16((Reg16)dest.r16, val);
-        break;
-	case AddrMode::Dir16:
-		Write(dest.n16, (byte_t)val);
+        setReg8((Reg8)dest.r8, (uint8_t)val);
         break;
 
-    // todo: continue
+    case AddrMode::Reg16:
+        setReg16((Reg16)dest.r16, val);
+        break;
 
-    [[unlikely]] default:
-		break;
+    case AddrMode::IndHL:
+        Write(getReg16(Reg16::HL), (uint8_t)val);
+        break;
+
+    case AddrMode::IndHLInc: {
+        Write(hl++, (uint8_t)val);
+        break;
+    }
+
+    case AddrMode::IndHLDec: {
+        Write(hl--, (uint8_t)val);
+        break;
+    }
+
+    case AddrMode::IndBC:
+        Write(bc, (uint8_t)val);
+        break;
+
+    case AddrMode::IndDE:
+        Write(de, (uint8_t)val);
+        break;
+
+    case AddrMode::IndC: {
+        uint16_t addr = 0xFF00 + getReg8(Reg8::C);
+        Write(addr, (uint8_t)val);
+        break;
+    }
+
+    case AddrMode::Dir8: {
+        uint16_t addr = 0xFF00 + dest.n8;
+        Write(addr, (uint8_t)val);
+        break;
+    }
+
+    case AddrMode::Dir16:
+        Write(dest.n16, (uint8_t)val);
+        break;
+
+    [[unlikely]]case AddrMode::Imm8:
+    [[unlikely]]case AddrMode::Imm16:
+    [[unlikely]]case AddrMode::Rel8:
+    [[unlikely]]case AddrMode::CC:
+    [[unlikely]]case AddrMode::Vec:
+    [[unlikely]]case AddrMode::None:
+    
+    [[unlikely]]default:
+        break;
     }
 }
 
