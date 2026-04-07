@@ -327,42 +327,102 @@ void SharpSM83::cpl(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::scf(SharpSM83& cpu, const Opcode& op) {
-
+	cpu.setFlag(Flag::CARRY, 1);
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::NEGATIVE, 0);
 }
 
 void SharpSM83::ccf(SharpSM83& cpu, const Opcode& op) {
-
+    cpu.setFlag(Flag::CARRY, !cpu.getFlag(Flag::CARRY));
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::NEGATIVE, 0);
 }
 
 void SharpSM83::rlca(SharpSM83& cpu, const Opcode& op){
+	bool carry = cpu.getFlag(Flag::CARRY);
+    byte_t a  = cpu.getReg8(Reg8::A);
+    bool newCarry = a & 0x80;
     
+    a <<= 1;
+    a |= carry;
+    
+    cpu.setFlag(Flag::CARRY, newCarry);
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::ZERO, 0);
+	cpu.setReg8(Reg8::A, a);
 }
 
 void SharpSM83::rrca(SharpSM83& cpu, const Opcode& op){
+	bool carry = cpu.getFlag(Flag::CARRY);
+	byte_t a = cpu.getReg8(Reg8::A);
+	bool newCarry = a & 0x01;
+
+	a >>= 1;
+	a |= (carry << 7);
     
+	cpu.setFlag(Flag::CARRY, newCarry);
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::ZERO, 0);
+    cpu.setReg8(Reg8::A, a);
 }
 
 void SharpSM83::rla(SharpSM83& cpu, const Opcode& op) {
+	bool carry = cpu.getFlag(Flag::CARRY);
+	cpu.setFlag(Flag::CARRY, cpu.getReg8(Reg8::A) & 0x80);
+	byte_t a = cpu.getReg8(Reg8::A);
+	a <<= 1;
+	a |= carry;
 
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::ZERO, 0);
+    cpu.setReg8(Reg8::A, a);
 }
 
 void SharpSM83::rra(SharpSM83& cpu, const Opcode& op) {
+    bool carry = cpu.getFlag(Flag::CARRY);
+    cpu.setFlag(Flag::CARRY, cpu.getReg8(Reg8::A) & 1);
+    byte_t a = cpu.getReg8(Reg8::A);
+    a >>= 1;
+    a |= (carry << 7);
 
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::ZERO, 0);
+    cpu.setReg8(Reg8::A, a);
 }
 
 void SharpSM83::rlc (SharpSM83& cpu, const Opcode& op) {
-
+	byte_t value = cpu.readOperand(op.op1);
+    bool newCarry = value & 0x80;
+    byte_t res = (value << 1) | (value >> 7);
+    cpu.setFlag(Flag::CARRY, newCarry);
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::ZERO, res == 0);
+	cpu.writeOperand(op.op1, res);
 }
 
 void SharpSM83::rrc (SharpSM83& cpu, const Opcode& op) {
+    byte_t value = cpu.readOperand(op.op1);
+    bool newCarry = value & 1;
+    byte_t res = (value >> 1) | (value << 7);
+    
+    cpu.setFlag(Flag::CARRY, newCarry);
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, 0);
+    cpu.setFlag(Flag::ZERO, res == 0);
 
+    cpu.writeOperand(op.op1, res);
 }
 
 void SharpSM83::rl(SharpSM83& cpu, const Opcode& op) {
-    uint8_t value = cpu.readOperand(op.op1);
+    byte_t value = cpu.readOperand(op.op1);
     bool oldCarry = cpu.getFlag(Flag::CARRY);
     bool newCarry = value & 0x80;
-    uint8_t result = (value << 1) | oldCarry;
+    byte_t result = (value << 1) | oldCarry;
 
     cpu.setFlag(Flag::CARRY, newCarry);
     cpu.setFlag(Flag::NEGATIVE, 0);
