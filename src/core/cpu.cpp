@@ -486,8 +486,15 @@ void SharpSM83::swap(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::bit(SharpSM83& cpu, const Opcode& op) {
+    byte_t b = cpu.readOperand(op.op1);
+    byte_t r = cpu.readOperand(op.op2);
+    word_t res = r & (1 << b);
 
+    cpu.setFlag(Flag::ZERO, res == 0);
+    cpu.setFlag(Flag::NEGATIVE, 0);
+    cpu.setFlag(Flag::HALF_CARRY, 1);
 }
+
 void SharpSM83::set(SharpSM83& cpu, const Opcode& op) {
 
 }
@@ -514,32 +521,49 @@ void SharpSM83::jr  (SharpSM83& cpu, const Opcode& op) {
 
 void SharpSM83::call(SharpSM83& cpu, const Opcode& op) {
     if (op.op1.mode == AddrMode::CC) {
-        // TODO: implement:
-    } else {
-        
-    }
-}
-
-void SharpSM83::ret (SharpSM83& cpu, const Opcode& op) {
-    if (op.op1.mode == AddrMode::CC) {
-        // TODO: implement
-        if (op.op1.cc) {
-            
+        address_t dir = op.op2.n16;
+        if (cpu.isCondition(op.op1.cc)) {
+            cpu.stackPush16(cpu.pc);
+            cpu.pc = dir;
         } else {
 
         }
-    } else {
+    } 
+
+    else if (op.op1.mode == AddrMode::Imm16) {
+        cpu.stackPush16(cpu.pc);
+        cpu.pc = op.op1.n16;
+    }
+    
+    else if (op.op1.mode == AddrMode::Vec) {
+        cpu.stackPush16(cpu.pc);
+        cpu.pc = op.op1.vec;
+    }
+
+    else {
+        assert(0);
+    }
+}
+
+void SharpSM83::ret(SharpSM83& cpu, const Opcode& op) {
+    if (op.op1.mode == AddrMode::CC) {
+        if (cpu.isCondition(op.op1.cc)) {
+            cpu.pc = cpu.stackPop16();
+        }
+    }
+    
+    else if (op.op1.mode == AddrMode::None) {
         cpu.pc = cpu.stackPop16();
     }
 }
 
 void SharpSM83::reti(SharpSM83& cpu, const Opcode& op) {
-    cpu.ei(cpu, op);
     cpu.ret(cpu, op);
+    cpu.ime = true;
 }
 
 void SharpSM83::rst (SharpSM83& cpu, const Opcode& op) {
-
+    cpu.call(cpu, op);
 }
 
 void SharpSM83::stop(SharpSM83& cpu, const Opcode& op) {
@@ -551,11 +575,11 @@ void SharpSM83::halt(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::di(SharpSM83& cpu, const Opcode& op) {
-
+    cpu.ime = false;
 }
 
 void SharpSM83::ei(SharpSM83& cpu, const Opcode& op) {
-
+    cpu.ime = true;
 }
 
 // --- ------------ ---

@@ -106,7 +106,7 @@ public:
 			int8_t e8;
 			uint8_t u3;
 
-            bool cc;
+            Condition cc;
             uint16_t vec;
 
             uint16_t raw;
@@ -224,6 +224,9 @@ private:
 
 	// void writeReg8(const RegDest reg, const byte_t val);
 	// byte_t getReg8(const RegDest reg);
+
+private:
+    bool ime = false;
 
 private:
 	void decodeLdR8R8();
