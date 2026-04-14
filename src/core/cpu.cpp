@@ -444,16 +444,34 @@ void SharpSM83::rr  (SharpSM83& cpu, const Opcode& op) {
     cpu.writeOperand(op.op1, val&0xFF);
 }
 
-void SharpSM83::sla (SharpSM83& cpu, const Opcode& op) {
-
+void SharpSM83::sla(SharpSM83& cpu, const Opcode& op) {
+    byte_t r8 = cpu.readOperand(op.op1);
+    bool carry = r8 & (1 << 7);
+    byte_t res = r8 << 1;
+    cpu.clearFlags();
+    cpu.setFlag(Flag::CARRY, carry);
+    cpu.setFlag(Flag::ZERO, res == 0);
+    cpu.writeOperand(op.op1, res);
 }
 
-void SharpSM83::sra (SharpSM83& cpu, const Opcode& op) {
-
+void SharpSM83::sra(SharpSM83& cpu, const Opcode& op) {
+    byte_t r8 = cpu.readOperand(op.op1);
+    bool carry = r8 & 1;
+    byte_t res = (r8 >> 1) | (r8 & 0x80);
+    cpu.clearFlags();
+    cpu.setFlag(Flag::CARRY, carry);
+    cpu.setFlag(Flag::ZERO, res == 0);
+    cpu.writeOperand(op.op1, res);
 }
 
-void SharpSM83::srl (SharpSM83& cpu, const Opcode& op) {
-
+void SharpSM83::srl(SharpSM83& cpu, const Opcode& op) {
+    byte_t r8 = cpu.readOperand(op.op1);
+    bool carry = r8 & 1;
+    byte_t res = r8 >> 1;
+    cpu.clearFlags();
+    cpu.setFlag(Flag::CARRY, carry);
+    cpu.setFlag(Flag::ZERO, res == 0);
+    cpu.writeOperand(op.op1, res);
 }
 
 void SharpSM83::swap(SharpSM83& cpu, const Opcode& op) {
