@@ -12,4 +12,7 @@ typedef unsigned long long qword_t;
 
 typedef short int unsigned address_t;
 
+constexpr address_t MAGB_IE_ADDR = 0xFFFF;
+constexpr address_t MAGB_IF_ADDR = 0xFF0F;
+
 #endif // MAGB_TYPEDEFS_H

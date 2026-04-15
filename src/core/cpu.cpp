@@ -496,11 +496,15 @@ void SharpSM83::bit(SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::set(SharpSM83& cpu, const Opcode& op) {
-
+    byte_t u3 = op.op1.u3;
+    byte_t res = cpu.readOperand(op.op2) | (1 << u3);
+    cpu.writeOperand(op.op2, res);
 }
 
 void SharpSM83::res(SharpSM83& cpu, const Opcode& op) {
-
+    byte_t u3 = op.op1.u3;
+    byte_t res = cpu.readOperand(op.op2) & ~(1 << u3);
+    cpu.writeOperand(op.op2, res);
 }
 
 void SharpSM83::jp  (SharpSM83& cpu, const Opcode& op) {
@@ -509,12 +513,17 @@ void SharpSM83::jp  (SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::jr  (SharpSM83& cpu, const Opcode& op) {
+    
     if (op.op2.mode != AddrMode::None) {
-        // conditional jump
-        // TODO: implement
+        int8_t offset = (int8_t)op.op2.n16;
+        if (cpu.isCondition(op.op1.cc)) {
+            cpu.pc += offset;
+        } else {
+
+        }
         
     } else {
-        int8_t offset = (int8_t)cpu.readOperand(op.op1);
+        int8_t offset = (int8_t)op.op1.n16;
         cpu.pc += offset;
     }
 }
@@ -567,11 +576,23 @@ void SharpSM83::rst (SharpSM83& cpu, const Opcode& op) {
 }
 
 void SharpSM83::stop(SharpSM83& cpu, const Opcode& op) {
-    
+    // TODO: implement
 }
 
 void SharpSM83::halt(SharpSM83& cpu, const Opcode& op) {
+    bool interruption = cpu.Read(MAGB_IE_ADDR) && cpu.Read(MAGB_IF_ADDR) && cpu.ime;
 
+    if (cpu.ime && interruption) {
+        cpu.halted = true;
+    }
+    else if (cpu.ime) {
+        cpu.halted = false;
+    } else {
+        // HALT BUG
+        // TODO: implement
+        cpu.haltBug = true;
+
+    }
 }
 
 void SharpSM83::di(SharpSM83& cpu, const Opcode& op) {
@@ -947,15 +968,32 @@ void SharpSM83::Reset() {
 }
 
 SharpSM83::~SharpSM83() {
+    
+}
+
+SharpSM83::Opcode SharpSM83::fetchCB(const byte_t secondByte) {
+    Opcode res;
+
+    // TODO: implement
+
+    return res;
+}
+
+SharpSM83::Opcode SharpSM83::fetch(const uint8_t op) {
+    Opcode res = opTable[op];
+    return res;
+}
+
+void SharpSM83::execute(const Opcode& op) {
+    op.exec(*this, op);
+
+    byte_t cycles = op.cycles;
 
 }
 
+
 void SharpSM83::Clock() {
-    byte_t opcode = Read(pc);
-    if (opcode == 0x00) {
-        // for testing
-        std::cout << "nop\n";
-    }
-    pc++;
+    // TODO: implement:
+
 
 }

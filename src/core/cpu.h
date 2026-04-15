@@ -222,11 +222,19 @@ private:
 
     void writeRegToReg(const Reg8 dest, const Reg8 value);
 
+    
 	// void writeReg8(const RegDest reg, const byte_t val);
 	// byte_t getReg8(const RegDest reg);
 
 private:
+    Opcode fetchCB(const byte_t secondByte);
+    Opcode fetch(const byte_t op);
+    void execute(const Opcode& op);
+
+private:
     bool ime = false;
+    bool halted = false;
+    bool haltBug = false;
 
 private:
 	void decodeLdR8R8();
