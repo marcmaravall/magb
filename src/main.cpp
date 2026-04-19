@@ -1,10 +1,16 @@
 #include "core/bus.h"
 #include "core/cpu.h"
 
-int main(int argc, char** argv) {
-    Bus bus;
-    bus.Init();
+#include "frontend/raylib/raylib_frontend.h"
 
-    std::cout << "hello, world!\n";
+int main(int argc, char** argv) {
+    // Bus bus;
+    // bus.Init();
+
+    RaylibFrontend frontend;
+
+    frontend.Main(argc, argv);
+    
     return 0;
 }
+

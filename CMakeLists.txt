@@ -1,17 +1,20 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required(VERSION 3.10)
+project(magb)
 
-if (POLICY CMP0141)
-  cmake_policy(SET CMP0141 NEW)
-  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-endif()
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project ("magb")
+file(GLOB magb_src "src/*.cpp" "src/core/*.cpp" "src/frontend/raylib/*.cpp")
 
-file(GLOB magb_src "src/*.cpp" "src/core/*.cpp")
 add_executable(magb ${magb_src})
 
-if (!WINDOWS)
-target_compile_options(magb PRIVATE
--Wall -Wextra -pedantic -std=c++11
-)
+target_include_directories(magb PRIVATE src)
+target_include_directories(magb PRIVATE thirdparty)
+
+add_subdirectory(thirdparty/raylib)
+
+target_link_libraries(magb raylib)
+
+if (NOT WIN32)
+    target_compile_options(magb PRIVATE -Wall -Wextra -pedantic)
 endif()

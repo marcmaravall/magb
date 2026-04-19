@@ -994,6 +994,6 @@ void SharpSM83::execute(const Opcode& op) {
 
 void SharpSM83::Clock() {
     // TODO: implement:
-
-
+    
 }
+
